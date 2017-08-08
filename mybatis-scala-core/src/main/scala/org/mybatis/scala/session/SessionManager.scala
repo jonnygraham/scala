@@ -18,6 +18,7 @@ package org.mybatis.scala.session
 import org.apache.ibatis.session._
 import org.apache.ibatis.logging.LogFactory
 import SessionManager.log
+import java.sql.Connection;
 
 /** Session lifecycle manager.
   * Manages the lifecycle of the Session
@@ -100,6 +101,14 @@ sealed class SessionManager(factory : SqlSessionFactory) {
       closeSession(sqlSession)
     }
   }
+
+    /** Executes the callback within a new transaction and commit at the end, automatically calls rollback if any exception. */
+  def transaction[T](executorType : ExecutorType, connection : Connection)(callback : Callback[T]) : T = 
+    transaction[T](factory.openSession(executorType.unwrap, connection))(callback)
+
+  /** Executes the callback within a new transaction and commit at the end, automatically calls rollback if any exception. */
+  def transaction[T](connection : Connection)(callback : Callback[T]) : T = 
+    transaction[T](factory.openSession(connection))(callback)
 
   /** Executes the callback within a new transaction and commit at the end, automatically calls rollback if any exception. */
   def transaction[T](executorType : ExecutorType, level : TransactionIsolationLevel)(callback : Callback[T]) : T = 
